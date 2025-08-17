@@ -1,4 +1,4 @@
-package org.example.sem_3_eksamen_programmering_lukas.config;
+/*package org.example.sem_3_eksamen_programmering_lukas.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -20,3 +20,4 @@ public class WebConfig implements WebMvcConfigurer {
 
     }
 }
+*/
