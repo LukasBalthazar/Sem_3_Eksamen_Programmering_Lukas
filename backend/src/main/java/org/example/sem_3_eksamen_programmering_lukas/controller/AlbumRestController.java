@@ -10,7 +10,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/index/albums")
+@RequestMapping("/albums")
 public class AlbumRestController {
     @Autowired AlbumRepository albums;
     //@Autowired StoreRepository;
