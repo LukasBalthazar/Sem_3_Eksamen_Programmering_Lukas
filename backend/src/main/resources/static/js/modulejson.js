@@ -1,14 +1,18 @@
+async function parseJsonOrNull(r) {
+    const text = await r.text();
+    return text ? JSON.parse(text) : null;
+}
 
 async function fetchAnyUrl(url) {
     const r = await fetch(url);
     if (!r.ok) throw new Error(await r.text());
-    return r.json();
+    return parseJsonOrNull(r);
 }
 
 async function restDelete(url) {
-    const r = await fetch(url, {method: "DELETE"});
+    const r = await fetch(url, { method: "DELETE" });
     if (!r.ok) throw new Error(await r.text());
-    return r.json();
+    return r.status === 204 ? null : parseJsonOrNull(r);
 }
 
 async function postObjectAsJson(url, obj) {
@@ -18,7 +22,7 @@ async function postObjectAsJson(url, obj) {
         body: JSON.stringify(obj)
     });
     if (!r.ok) throw new Error(await r.text());
-    return r.json();
+    return parseJsonOrNull(r);
 }
 
 async function putObjectAsJson(url, obj) {
@@ -28,9 +32,7 @@ async function putObjectAsJson(url, obj) {
         body: JSON.stringify(obj)
     });
     if (!r.ok) throw new Error(await r.text());
-    return r.json();
+    return parseJsonOrNull(r);
 }
 
 export { fetchAnyUrl, postObjectAsJson, putObjectAsJson, restDelete };
-
-
