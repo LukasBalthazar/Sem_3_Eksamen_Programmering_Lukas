@@ -13,7 +13,7 @@ public class Reservation {
     private Customer customer;
 
     @ManyToOne
-    @JoinColumn(name="album-id")
+    @JoinColumn(name="album_id")
     private Album album;
 
     private boolean active; // true = interested, false = cancelled

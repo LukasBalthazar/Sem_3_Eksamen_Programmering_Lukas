@@ -1,4 +1,4 @@
-package org.example.sem_3_eksamen_programmering_lukas.repository;
+/*package org.example.sem_3_eksamen_programmering_lukas.repository;
 
 import org.example.sem_3_eksamen_programmering_lukas.model.Reservation;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,4 +10,4 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
     List<Reservation> findReservationByCustomerId(int customerId);
     List<Reservation> findReservationByCustomerIdAndActiveTrue(int customerId);
     Optional<Reservation> findByCustomerIdAndAlbumId(int customerId, int albumId);
-}
+}*/
