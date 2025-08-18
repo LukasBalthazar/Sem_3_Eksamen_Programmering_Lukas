@@ -1,12 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Title</title>
-  <link rel="stylesheet" href="">
-</head>
+<!doctype html>
+<html>
 <body>
-<h1>Placeholder</h1>
+<h1>Albums</h1>
+<ul id="albums"></ul>
+
+<form id="create">
+  <input name="title" placeholder="Title" required>
+  <input name="artist" placeholder="Artist" required>
+  <label><input type="checkbox" name="available"> Available</label>
+  <button>Add</button>
+</form>
+
+<script type="module">
+    const $ = s => document.querySelector(s);
+    async function getJSON(p){ const r=await fetch(p); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+    async function postJSON(p,b){ const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+
+    async function load() {
+        const data = await getJSON('/albums/');      // same-origin: no CORS
+        $('#albums').innerHTML = data.map(a => `<li>${a.title} – ${a.artist} (${a.available?'✓':'×'})</li>`).join('');
+    }
+
+    $('#create').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        await postJSON('/albums/', {
+            title: fd.get('title'),
+            artist: fd.get('artist'),
+            available: fd.get('available') === 'on'
+        });
+        e.target.reset();
+        load();
+    };
+
+    load();
+</script>
 </body>
-<script type="module" src=""></script>
 </html>
