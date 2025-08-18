@@ -6,7 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
-public class Placeholder {
+public class Album {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
