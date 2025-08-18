@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController("/reservations")
+@RestController
+@RequestMapping("/reservations")
 public class ReservationRestController {
     @Autowired
     ReservationRepository reservations;
@@ -44,10 +45,10 @@ public class ReservationRestController {
     public List<Reservation> list(@PathVariable int customerId, @RequestParam(defaultValue="false") boolean onlyAvailable){
         if (onlyAvailable) {
             // active reservations where album.available = true
-            return reservations.findReservationByCustomerIdAndActiveTrue(customerId)
+            return reservations.findByCustomerIdAndActiveTrue(customerId)
                     .stream().filter(r -> r.getAlbum()!=null && r.getAlbum().isAvailable()).toList();
         }
-        return reservations.findReservationByCustomerId(customerId);
+        return reservations.findByCustomerId(customerId);
     }
 
 
