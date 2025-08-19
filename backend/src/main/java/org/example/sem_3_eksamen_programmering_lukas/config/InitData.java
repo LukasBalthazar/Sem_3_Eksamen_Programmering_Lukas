@@ -17,18 +17,35 @@ public class InitData implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        Album a = new Album();
-        a.setTitle("In Search of Sunrise");
-        a.setArtist("Tiesto");
-        a.setAvailable(true);
-        //a.setStore(cph);
-        albums.save(a);
 
-        Customer u = new Customer();
-        u.setName("Test User");
-        u.setEmail("test@example.com");
-        customers.save(u);
+        Album a1 = new Album();
+        a1.setTitle("Blue Train");
+        a1.setArtist("Coltrane");
+        a1.setAvailable(true);
+        albums.save(a1);
 
+        Album a2 = new Album();
+        a2.setTitle("Kind of Blue");
+        a2.setArtist("Miles Davis");
+        a2.setAvailable(false);
+        albums.save(a2);
+
+        Album a3 = new Album();
+        a3.setTitle("Discovery");
+        a3.setArtist("Daft Punk");
+        a3.setAvailable(true);
+        albums.save(a3);
+
+
+        Customer c1 = new Customer();
+        c1.setName("Alice");
+        c1.setEmail("alice@example.com");
+        customers.save(c1);
+
+        Customer c2 = new Customer();
+        c2.setName("Bob");
+        c2.setEmail("bob@example.com");
+        customers.save(c2);
     }
 
 }
