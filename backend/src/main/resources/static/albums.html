@@ -1,5 +1,9 @@
 <!doctype html>
-<html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Albums</title>
+</head>
 <body>
 <h1>Albums</h1>
 <nav style="margin-bottom:12px">
@@ -48,7 +52,7 @@
           <td>${a.id}</td>
           <td>${a.title ?? ''}</td>
           <td>${a.artist ?? ''}</td>
-          <td>${a.available ? '✓' : '×'}</td>
+          <td>${a.available ? "✓" : "×"}</td>
           <td>
             <button class="edit">Edit</button>
             <button class="del">Delete</button>

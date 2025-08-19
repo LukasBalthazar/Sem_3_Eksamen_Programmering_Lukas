@@ -1,4 +1,4 @@
-import { fetchAnyUrl, restDelete, postObjectAsJson, putObjectAsJson } from "./modulejson.js";
+/*import { fetchAnyUrl, restDelete, postObjectAsJson, putObjectAsJson } from "./modulejson.js";
 
 // Use ONE of these depending on A/B:
 const urlAlbums = "/albums/";                         // Option A (static under Spring)
@@ -46,7 +46,7 @@ if (form) {
         form.reset();
         await loadAlbums();
     };
-}
+}*/
 
 
 
