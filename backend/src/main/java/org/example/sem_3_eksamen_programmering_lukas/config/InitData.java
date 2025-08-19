@@ -19,14 +19,14 @@ public class InitData implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
         Album a1 = new Album();
-        a1.setTitle("Blue Train");
-        a1.setArtist("Coltrane");
+        a1.setTitle("For Ever");
+        a1.setArtist("Jungle");
         a1.setAvailable(true);
         albums.save(a1);
 
         Album a2 = new Album();
-        a2.setTitle("Kind of Blue");
-        a2.setArtist("Miles Davis");
+        a2.setTitle("In The Moment");
+        a2.setArtist("Kaskade");
         a2.setAvailable(false);
         albums.save(a2);
 
