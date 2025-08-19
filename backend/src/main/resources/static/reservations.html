@@ -11,6 +11,83 @@
   <a href="reservations.html">Reservations</a> |
   <a href="stores.html">Stores</a>
 </nav>
+<label>Customer ID: <input id="cid" value="1" size="6"></label>
+<label><input type="checkbox" id="onlyAvail"> Only available now</label>
+<button id="load">Load</button>
+<div id="msg" style="color:#b00"></div>
 
+<h3>Register / Unregister</h3>
+<form id="regForm">
+  <input name="albumId" placeholder="Album ID" required>
+  <button data-action="register">Register interest</button>
+  <button data-action="unregister" type="button">Unregister</button>
+</form>
+
+<h3>My reservations</h3>
+<table border="1" cellpadding="6">
+  <thead><tr><th>Res ID</th><th>Album</th><th>Artist</th><th>Available</th><th>Status</th><th>Action</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+
+<script type="module">
+    import { get } from './js/modulejson.js';
+    const BASE = '/reservations/'; // reuse base inside ad-hoc calls below
+
+    const cid = document.querySelector('#cid');
+    const only = document.querySelector('#onlyAvail');
+    const rows = document.querySelector('#rows');
+    const msg = document.querySelector('#msg');
+
+    const err = e => (msg.textContent = e.message, setTimeout(()=>msg.textContent='',2000));
+
+    async function fetchJson(url, opts) {
+        const r = await fetch(API + url, opts);
+        if (!r.ok) throw new Error(await r.text());
+        const t = await r.text();
+        return t ? JSON.parse(t) : null;
+    }
+
+    async function load(){
+        try {
+            const data = await fetchJson(`/reservations/customer/${encodeURIComponent(cid.value)}?onlyAvailable=${only.checked}`);
+            rows.innerHTML = (data||[]).map(r => {
+                const a = r.album || {};
+                const status = r.status ?? (r.active ? 'INTERESTED' : 'CANCELLED');
+                return `<tr data-album-id="${a.id||''}">
+            <td>${r.id??''}</td><td>${a.title??''}</td><td>${a.artist??''}</td>
+            <td>${a.available? 'Yes':'No'}</td><td>${status}</td>
+            <td><button class="unreg">Unregister</button></td>
+          </tr>`;
+            }).join('');
+        } catch(e){ err(e); }
+    }
+
+    document.querySelector('#load').onclick = e => (e.preventDefault(), load());
+
+    document.querySelector('#regForm').onsubmit = async e => {
+        e.preventDefault();
+        const albumId = new FormData(e.target).get('albumId');
+        try {
+            await fetchJson(`/reservations/register?customerId=${encodeURIComponent(cid.value)}&albumId=${encodeURIComponent(albumId)}`, { method:'POST' });
+            e.target.reset(); load();
+        } catch(e){ err(e); }
+    };
+    document.querySelector('#regForm [data-action="unregister"]').onclick = async () => {
+        const albumId = document.querySelector('#regForm [name="albumId"]').value;
+        try {
+            await fetch(`/reservations/unregister?customerId=${encodeURIComponent(cid.value)}&albumId=${encodeURIComponent(albumId)}`, { method:'POST' });
+            load();
+        } catch(e){ err(e); }
+    };
+
+    rows.addEventListener('click', async e => {
+        if (!e.target.classList.contains('unreg')) return;
+        const albumId = e.target.closest('tr')?.dataset?.albumId;
+        try { await fetch(`/reservations/unregister?customerId=${encodeURIComponent(cid.value)}&albumId=${encodeURIComponent(albumId)}`, { method:'POST' }); load(); }
+        catch(e){ err(e); }
+    });
+
+    load();
+</script>
 </body>
 </html>

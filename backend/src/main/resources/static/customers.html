@@ -11,6 +11,42 @@
   <a href="reservations.html">Reservations</a> |
   <a href="stores.html">Stores</a>
 </nav>
+<label>Store ID: <input id="sid" value="1" size="6"></label>
+<input id="artist" placeholder="Filter by artist">
+<label><input type="checkbox" id="avail"> Only available</label>
+<button id="load">Load store</button>
+<pre id="out" style="background:#f6f6f6;padding:8px"></pre>
+
+<h3>Assign album to store</h3>
+<input id="albumId" placeholder="Album ID">
+<button id="assign">Assign</button>
+
+<script type="module">
+    import { get } from './js/modulejson.js';
+    const out = document.querySelector('#out');
+
+    document.querySelector('#load').onclick = async ()=>{
+        const sid = document.querySelector('#sid').value.trim();
+        const artist = document.querySelector('#artist').value.trim();
+        const avail = document.querySelector('#avail').checked;
+        const q = new URLSearchParams();
+        if (artist) q.set('artist', artist);
+        if (avail) q.set('available', 'true');
+        const data = await get(`/stores/${sid}?${q.toString()}`);
+        out.textContent = JSON.stringify(data, null, 2);
+    };
+
+    document.querySelector('#assign').onclick = async ()=>{
+        const sid = document.querySelector('#sid').value.trim();
+        const aid = document.querySelector('#albumId').value.trim();
+        const r = await fetch(`/albums/${aid}/assign-store/${sid}`, { method:'POST' });
+        if (!r.ok) alert(await r.text());
+        document.querySelector('#load').click();
+    };
+</script>
+</body>
+</html>
+
 
 </body>
 </html>
