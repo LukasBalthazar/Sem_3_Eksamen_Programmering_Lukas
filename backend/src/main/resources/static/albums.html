@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<body>
+<h1>Albums</h1>
+
+<h3>Create</h3>
+<form id="createForm">
+  <input name="title" placeholder="Title" required>
+  <input name="artist" placeholder="Artist" required>
+  <label><input type="checkbox" name="available"> Available</label>
+  <button>Add</button>
+</form>
+
+<h3>All albums</h3>
+<table border="1" cellpadding="6">
+  <thead><tr><th>ID</th><th>Title</th><th>Artist</th><th>Available</th><th>Actions</th></tr></thead>
+  <tbody id="tableBody"></tbody>
+</table>
+
+<h3>Update selected</h3>
+<form id="updateForm">
+  <input name="id" placeholder="ID" readonly>
+  <input name="title" placeholder="Title" required>
+  <input name="artist" placeholder="Artist" required>
+  <label><input type="checkbox" name="available"> Available</label>
+  <button>Save changes</button>
+</form>
+
+<script type="module">
+    import { fetchAnyUrl, postObjectAsJson, putObjectAsJson, restDelete } from './js/modulejson.js';
+
+    // If frontend is separate: use 'http://localhost:8080/albums/'
+    // If frontend is served by Spring (/static): use '/albums/'
+    const BASE = '/albums/';
+
+    const tb = document.getElementById('tableBody');
+    const createForm = document.getElementById('createForm');
+    const updateForm = document.getElementById('updateForm');
+
+    function rowHtml(a){
+        return `<tr data-id="${a.id}">
+          <td>${a.id}</td>
+          <td>${a.title ?? ''}</td>
+          <td>${a.artist ?? ''}</td>
+          <td>${a.available ? '✓' : '×'}</td>
+          <td>
+            <button class="edit">Edit</button>
+            <button class="del">Delete</button>
+          </td>
+        </tr>`;
+    }
+
+    async function load(){
+        const data = await fetchAnyUrl(BASE); // GET /albums/ (note trailing slash)
+        tb.innerHTML = data.map(rowHtml).join('');
+    }
+
+    createForm.onsubmit = async (e)=>{
+        e.preventDefault();
+        const fd = new FormData(createForm);
+        await postObjectAsJson(BASE, {
+            title: fd.get('title'),
+            artist: fd.get('artist'),
+            available: fd.get('available') === 'on'
+        });
+        createForm.reset();
+        load();
+    };
+
+    // Table actions: edit/delete (event delegation)
+    tb.addEventListener('click', async (e)=>{
+        const tr = e.target.closest('tr');
+        if (!tr) return;
+        const id = tr.dataset.id;
+
+        if (e.target.classList.contains('del')) {
+            await restDelete(BASE + id);     // DELETE /albums/{id}
+            load();
+        }
+        if (e.target.classList.contains('edit')) {
+            // populate the update form
+            const item = await fetchAnyUrl(BASE + id); // GET one
+            updateForm.elements.id.value = item.id;
+            updateForm.elements.title.value = item.title ?? '';
+            updateForm.elements.artist.value = item.artist ?? '';
+            updateForm.elements.available.checked = !!item.available;
+            updateForm.scrollIntoView({behavior:'smooth'});
+        }
+    });
+
+    updateForm.onsubmit = async (e)=>{
+        e.preventDefault();
+        const fd = new FormData(updateForm);
+        const id = fd.get('id');
+        await putObjectAsJson(BASE + id, {
+            title: fd.get('title'),
+            artist: fd.get('artist'),
+            available: fd.get('available') === 'on'
+        }); // PUT /albums/{id}
+        load();
+    };
+
+    load();
+</script>
+</body>
+</html>

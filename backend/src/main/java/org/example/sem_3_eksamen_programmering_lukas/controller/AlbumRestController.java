@@ -40,8 +40,8 @@ public class AlbumRestController {
         Album a = albums.findById(id).get();
         a.setTitle(in.getTitle());
         a.setArtist(in.getArtist());
-        /*a.setAvailable(in.isAvailable());
-        if (in.getStore() != null) {
+        a.setAvailable(in.isAvailable());
+        /*if (in.getStore() != null) {
             int sid = in.getStore().getId();
             a.setStore(albums.findById(sid).orElseThrow());
         }*/
