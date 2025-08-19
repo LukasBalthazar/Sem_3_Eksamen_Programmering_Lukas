@@ -11,14 +11,38 @@
   <a href="reservations.html">Reservations</a> |
   <a href="stores.html">Stores</a>
 </nav>
-<label>Customer ID: <input id="cid" value="1" size="6"></label>
-<label><input type="checkbox" id="onlyAvail"> Only available now</label>
-<button id="load">Load</button>
+
+<!-- Customer & Album selection -->
+<div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:10px">
+  <div>
+    <label for="customerSelect"><strong>Customer</strong></label><br>
+    <select id="customerSelect">
+      <option value="">— choose customer —</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="albumSelect"><strong>Album</strong></label><br>
+    <select id="albumSelect">
+      <option value="">— choose album —</option>
+    </select>
+  </div>
+
+  <div>
+    <label><input type="checkbox" id="onlyAvail"> Only available now</label><br>
+    <button id="load">Load</button>
+  </div>
+</div>
+
+<!-- Selected customer info (id is hidden but used by API) -->
+<input id="cid" type="hidden" value="">
+<div id="custInfo" style="margin:-6px 0 10px 0;color:#333">Selected: —</div>
+
 <div id="msg" style="color:#b00"></div>
 
 <h3>Register / Unregister</h3>
 <form id="regForm">
-  <input name="albumId" placeholder="Album ID" required>
+  <!-- album is taken from albumSelect -->
   <button data-action="register">Register interest</button>
   <button data-action="unregister" type="button">Unregister</button>
 </form>
@@ -30,33 +54,59 @@
 </table>
 
 <script type="module">
-    // Serve from same origin as Spring Boot:
-    const API = ''; // same-origin base
+    const API = ''; // same-origin (Spring serves /static)
 
+    const customerSelect = document.querySelector('#customerSelect');
+    const albumSelect = document.querySelector('#albumSelect');
     const cid = document.querySelector('#cid');
     const only = document.querySelector('#onlyAvail');
     const rows = document.querySelector('#rows');
     const msg = document.querySelector('#msg');
+    const custInfo = document.querySelector('#custInfo');
 
-    const showErr = e => {
-        msg.textContent = e.message || String(e);
-        setTimeout(() => (msg.textContent = ''), 2500);
-    };
+    const showErr = e => { msg.textContent = e.message || String(e); setTimeout(() => msg.textContent = '', 2500); };
 
     async function fetchJson(url, opts) {
-        const r = await fetch(API + url, {
-            headers: { 'Content-Type': 'application/json' },
-            ...opts
-        });
-        if (!r.ok) {
-            const text = await r.text();
-            throw new Error(text || `HTTP ${r.status}`);
-        }
-        const text = await r.text();
-        return text ? JSON.parse(text) : null;
+        const r = await fetch(API + url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+        if (!r.ok) throw new Error((await r.text()) || `HTTP ${r.status}`);
+        const t = await r.text();
+        return t ? JSON.parse(t) : null;
     }
 
-    async function load() {
+    function setSelectedCustomer(c) {
+        cid.value = c?.id ?? '';
+        custInfo.textContent = c
+            ? `Selected: ${c.name ?? ''} <${c.email ?? ''}> [id ${c.id}]`
+            : 'Selected: —';
+    }
+
+    async function populateCustomers() {
+        const list = await fetchJson('/customers/search?q=');
+        customerSelect.innerHTML = `<option value="">— choose customer —</option>` +
+            (list || []).map(c => `<option value="${c.id}">${escapeHtml(c.name || '(no name)')} — ${escapeHtml(c.email || '')}</option>`).join('');
+        // Auto-select first customer for convenience
+        if (list && list.length) {
+            customerSelect.value = String(list[0].id);
+            setSelectedCustomer(list[0]);
+        }
+    }
+
+    async function populateAlbums() {
+        // Your AlbumRestController lists at /albums/ (with trailing slash)
+        const list = await fetchJson('/albums/');
+        albumSelect.innerHTML = `<option value="">— choose album —</option>` +
+            (list || []).map(a => {
+                const text = a.title ? (a.artist ? `${a.title} — ${a.artist}` : a.title) : '(untitled)';
+                return `<option value="${a.id}">${escapeHtml(text)}</option>`;
+            }).join('');
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    async function loadReservations() {
+        if (!cid.value) { rows.innerHTML = ''; return; }
         try {
             const data = await fetchJson(`/reservations/customer/${encodeURIComponent(cid.value)}?onlyAvailable=${only.checked}`);
             rows.innerHTML = (data || []).map(r => {
@@ -69,56 +119,64 @@
             <td>${a.artist ?? ''}</td>
             <td>${a.available ? 'Yes' : 'No'}</td>
             <td>${status}</td>
-            <td>
-              ${r.active
-                    ? `<button class="unreg">Unregister</button>`
-                    : `<em>—</em>`}
-            </td>
+            <td>${r.active ? `<button class="unreg">Unregister</button>` : `<em>—</em>`}</td>
           </tr>`;
             }).join('');
         } catch (e) { showErr(e); }
     }
 
-    document.querySelector('#load').addEventListener('click', e => {
-        e.preventDefault();
-        load();
+    document.querySelector('#load').addEventListener('click', e => (e.preventDefault(), loadReservations()));
+
+    customerSelect.addEventListener('change', async () => {
+        const id = customerSelect.value;
+        if (!id) { setSelectedCustomer(null); rows.innerHTML=''; return; }
+        try {
+            const c = await fetchJson(`/customers/${encodeURIComponent(id)}`);
+            setSelectedCustomer(c);
+            loadReservations();
+        } catch (e) { showErr(e); }
     });
 
-    // Register from form
     document.querySelector('#regForm').addEventListener('submit', async e => {
         e.preventDefault();
-        const albumId = new FormData(e.target).get('albumId');
-        if (!albumId) return;
+        const customerId = cid.value;
+        const albumId = albumSelect.value;
+        if (!customerId || !albumId) return showErr(new Error('Choose a customer and an album first.'));
         try {
-            await fetchJson(`/reservations/register?customerId=${encodeURIComponent(cid.value)}&albumId=${encodeURIComponent(albumId)}`, { method: 'POST' });
-            e.target.reset();
-            load();
-        } catch (e) { showErr(e); }
+            await fetchJson(`/reservations/register?customerId=${encodeURIComponent(customerId)}&albumId=${encodeURIComponent(albumId)}`, { method: 'POST' });
+            loadReservations();
+        } catch (e2) { showErr(e2); }
     });
 
-    // Unregister from the form button (by Album ID)
     document.querySelector('#regForm [data-action="unregister"]').addEventListener('click', async () => {
-        const albumId = document.querySelector('#regForm [name="albumId"]').value;
-        if (!albumId) return;
+        const customerId = cid.value;
+        const albumId = albumSelect.value;
+        if (!customerId || !albumId) return showErr(new Error('Choose a customer and an album first.'));
         try {
-            await fetchJson(`/reservations/unregister?customerId=${encodeURIComponent(cid.value)}&albumId=${encodeURIComponent(albumId)}`, { method: 'POST' });
-            load();
+            await fetchJson(`/reservations/unregister?customerId=${encodeURIComponent(customerId)}&albumId=${encodeURIComponent(albumId)}`, { method: 'POST' });
+            loadReservations();
         } catch (e) { showErr(e); }
     });
 
-    // Unregister from table row button
     rows.addEventListener('click', async e => {
         if (!e.target.classList.contains('unreg')) return;
         const tr = e.target.closest('tr');
         const albumId = tr?.dataset?.albumId;
-        if (!albumId) return;
+        const customerId = cid.value;
+        if (!albumId || !customerId) return;
         try {
-            await fetchJson(`/reservations/unregister?customerId=${encodeURIComponent(cid.value)}&albumId=${encodeURIComponent(albumId)}`, { method: 'POST' });
-            load();
+            await fetchJson(`/reservations/unregister?customerId=${encodeURIComponent(customerId)}&albumId=${encodeURIComponent(albumId)}`, { method: 'POST' });
+            loadReservations();
         } catch (e) { showErr(e); }
     });
 
-    load();
+    // Boot
+    (async function init() {
+        try {
+            await Promise.all([populateCustomers(), populateAlbums()]);
+            await loadReservations();
+        } catch (e) { showErr(e); }
+    })();
 </script>
 
 </body>
