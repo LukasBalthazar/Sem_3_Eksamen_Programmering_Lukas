@@ -23,6 +23,4 @@ class AlbumRepositoryTest {
         assertThat(all).isNotEmpty();
         assertThat(all).extracting(Album::getTitle).contains("Kind of Blue");
     }
-
-
 }
